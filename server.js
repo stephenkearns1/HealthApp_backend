@@ -131,23 +131,7 @@ app.post('/register', function(req, res){
       - Checks if user name already exists 
    */
    
-   /*
-    //get the users details 
-    var idIn = 4;//req.query.id;
-    var firstNameIn = req.query.firstName;
-    var secondNameIn = req.query.secondName;
-    var usernameIn = req.query.username;
-    var passwordIn = req.query.password;
-    var emailIn = req.query.email;
-    var userGoalIn = req.query.goal;
-    //NOTE: the below variables are optional so can be null
-    //I will add defaults to them before making a request so it may not matter serverside
-    var ageIn = req.query.age;
-    var userMedicalConditionIn = req.query.medicalCondition;
-    var conditionLevelIn = req.query.level;
-    
-    
-    */
+
     
        var idIn = 4;//req.query.id;
     var firstNameIn = req.body.firstname;
@@ -238,14 +222,7 @@ app.post('/register', function(req, res){
 });
 
 function initServer(){
-  //other host 127.0.0.1
-  //port 3306
-  
-     //TODO: Remove cred's from code 
-  //creates a connection to the database 
-  
 
-  
   //connects to the database 
   con.connect(function(err){
      if(err){
