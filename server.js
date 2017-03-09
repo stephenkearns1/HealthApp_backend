@@ -141,7 +141,6 @@ app.post('/register', function(req, res){
     var emailIn = req.body.email;
     var userGoalIn = req.body.goal;
     //NOTE: the below variables are optional so can be null
-    //I will add defaults to them before making a request so it may not matter serverside
     var ageIn = req.body.age;
     var userMedicalConditionIn = req.body.medicalCondition;
     var conditionLevelIn = req.body.level;
