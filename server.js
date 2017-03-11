@@ -1,4 +1,3 @@
-
 var express = require('express'); //Express web framework
 var bcrypt = require('bcrypt');
 var bodyParser = require("body-parser");
@@ -24,7 +23,7 @@ const saltRounds = 10;
 
 
 function CheckAuth(token, callback){
- 
+    console.log(token);
     con.query('SELECT token FROM users WHERE token = ?',[token],function(err, data) {
         if(err)throw err;
         else if(data.length === 0){
@@ -34,6 +33,8 @@ function CheckAuth(token, callback){
         jwt.verify(token, config.secret, function(err, decoded) {
             if (err) {
                 callback('invaild');
+             }else{
+                 callback('vaild');
              }
         });
     });
@@ -48,8 +49,8 @@ app.post('/api/auth/check', function(req, res) {
     
     var token = req.body.token;
     
-    CheckAuth(token, function(res){
-       res.send(res); 
+    CheckAuth(token, function(callback){
+       res.send(callback); 
     });
     
 })
@@ -100,7 +101,7 @@ app.post("/api/auth/login", function(req, res){
                
             var jwtToken = jwt.sign(payload, config.secret, {expiresIn: '24h' })
              
-            con.query('INSERT INTO users SET token = ?', jwtToken, function(err) {
+            con.query('UPDATE users SET token = ? WHERE username = ? ',[jwtToken,username], function(err) {
                 if(err)throw err;
                 //not sure it will continue after exeption is thrown but I will find out eventually 
                 res.send("failed to store token");
@@ -133,27 +134,28 @@ app.post('/register', function(req, res){
    
 
     
-       var idIn = 4;//req.query.id;
-    var firstNameIn = req.body.firstname;
-    var secondNameIn = req.body.secondname;
-    var usernameIn = req.body.username;
-    var passwordIn = req.body.password;
-    var emailIn = req.body.email;
-    var userGoalIn = req.body.goal;
+       var id = 4;//req.query.id;
+    var firstName = req.body.firstname;
+    var secondName= req.body.secondname;
+    var username= req.body.username;
+    var password= req.body.password;
+    var email = req.body.email;
+    var userGoal = req.body.goal;
     //NOTE: the below variables are optional so can be null
-    var ageIn = req.body.age;
-    var userMedicalConditionIn = req.body.medicalCondition;
-    var conditionLevelIn = req.body.level;
+    //I will add defaults to them before making a request so it may not matter serverside
+    var age = req.body.age;
+    var userMedicalCondition = req.body.medicalCondition;
+    var conditionLevel = req.body.level;
     
     
     console.log(req.body);
     
     
     
-    if(idIn === undefined || usernameIn === undefined || passwordIn === undefined 
-    || firstNameIn == undefined || secondNameIn == undefined || emailIn == undefined
-    || userGoalIn == undefined || ageIn == undefined || userMedicalConditionIn == undefined
-    ||conditionLevelIn == undefined)
+    if(id === undefined || username=== undefined ||password=== undefined 
+    || firstName == undefined || secondName== undefined || email == undefined
+    || userGoal == undefined || age == undefined || userMedicalCondition == undefined
+    ||conditionLevel == undefined)
     {
         res.send("Invalid params!");
     }
@@ -161,30 +163,28 @@ app.post('/register', function(req, res){
     
     //santize the user's input to clean up dirt strings and protect agaisnt common attacks such as XSS
     //Good ref for your own info: https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)
-    idIn = expressSanitizer.sanitize(idIn);
-    usernameIn = expressSanitizer.sanitize(usernameIn);
-    passwordIn = expressSanitizer.sanitize(passwordIn);
-    firstNameIn = expressSanitizer.sanitize(firstNameIn);
-    secondNameIn = expressSanitizer.sanitize(secondNameIn);
-    emailIn = expressSanitizer.sanitize(emailIn);
-    userGoalIn = expressSanitizer.sanitize(userGoalIn);
-    ageIn = expressSanitizer.sanitize(ageIn);
-    userMedicalConditionIn = expressSanitizer.sanitize(userMedicalConditionIn);
-    conditionLevelIn = expressSanitizer.sanitize(conditionLevelIn);
+    id = expressSanitizer.sanitize(id);
+    username= expressSanitizer.sanitize(username);
+    password = expressSanitizer.sanitize(password);
+    firstName = expressSanitizer.sanitize(firstName);
+    secondName= expressSanitizer.sanitize(secondName);
+    email = expressSanitizer.sanitize(email);
+    userGoal = expressSanitizer.sanitize(userGoal);
+    age = expressSanitizer.sanitize(age);
+    userMedicalCondition = expressSanitizer.sanitize(userMedicalCondition);
+    conditionLevel = expressSanitizer.sanitize(conditionLevel);
+    password= bcrypt.hashSync(password, saltRounds);
     
-    console.log(idIn, usernameIn, passwordIn);
-    passwordIn = bcrypt.hashSync(passwordIn, saltRounds);
-    console.log(passwordIn);
     
-    if(usernameIn.length < 3){
+    if(username.length < 3){
         res.send('Invaild username');
     }
     
-    if(passwordIn.length < 8){
+    if(password.length < 8){
         res.send('Invaild password');
     }
     /*TODO: need to also ensure email is valid*/
-    con.query('SELECT username FROM users WHERE username = ?', [usernameIn], function(err, data){
+    con.query('SELECT username FROM users WHERE username = ?', [username], function(err, data){
        if(err)
        {
          logging.log('error occured', err);
@@ -197,9 +197,9 @@ app.post('/register', function(req, res){
        else
        {
     
-            var user = {id:idIn, username:usernameIn, password:passwordIn, 
-            firstname:firstNameIn, secondname:secondNameIn, age:ageIn, email:emailIn,
-            usergoal:userGoalIn, medicalcondition:userMedicalConditionIn, conditionlevel:conditionLevelIn};
+            var user = {id:id, username:username, password:password, 
+            firstname:firstName, secondname:secondName, age:age, email:email,
+            usergoal:userGoal, medicalcondition:userMedicalCondition, conditionlevel:conditionLevel};
             
             con.query('INSERT INTO users SET ?',user,function(err){
                //if an error occurs throw it 
