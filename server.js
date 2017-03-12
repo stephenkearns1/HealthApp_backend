@@ -1,3 +1,4 @@
+
 var express = require('express'); //Express web framework
 var bcrypt = require('bcrypt');
 var bodyParser = require("body-parser");
@@ -218,6 +219,18 @@ app.post('/register', function(req, res){
     });
     
     
+});
+
+app.post('/api/auth/save/accessCode', function(req, res) {
+    var accessCode = req.body.accessCode;
+    accessCode = expressSanitizer.sanitize(accessCode);
+    con.query("UPDATE users SET accesscode = ?", accessCode, function(err) {
+        if(err){
+            logging.log(err);
+        }else{
+            res.send('updated');
+        }
+    })
 });
 
 function initServer(){
