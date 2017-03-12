@@ -1,4 +1,11 @@
 var person = {
-    username:'paulhayes',
-    password: 'superhayez'
+     username:'',
+     password: '',
+     firstname: '',
+     secondname: '',
+     email: '',
+     goal: '',
+     age: '',
+     medicalCondition: '', 
+     level: ''
 }
