@@ -1,34 +1,12 @@
 var chai = require('chai'), 
 chaiHttp = require('chai-http');
 var server = require('../server.js');
-var should = chai.should();
+var should = chai.should;
+var expect = chai.expect;
 var user = require('./models/user.js');
 chai.use(chaiHttp);
 
-/* example 
-
-    it('should add a SINGLE blob on /blobs POST', function(done) {
-  chai.request(server)
-    .post('/blobs')
-    .send({'name': 'Java', 'lastName': 'Script'})
-    .end(function(err, res){
-      res.should.have.status(200);
-      res.should.be.json;
-      res.body.should.be.a('object');
-      res.body.should.have.property('SUCCESS');
-      res.body.SUCCESS.should.be.a('object');
-      res.body.SUCCESS.should.have.property('name');
-      res.body.SUCCESS.should.have.property('lastName');
-      res.body.SUCCESS.should.have.property('_id');
-      res.body.SUCCESS.name.should.equal('Java');
-      res.body.SUCCESS.lastName.should.equal('Script');
-      done();
-    });
-});
-
-
-*/
-describe('Login', function() {
+describe('Login endpoint should return 200 status', function() {
     it('POST /api/auth/login should return invaild creds, if creds are invaild', function(done) {
       user = {username: 'mark', password: 'hi'};
       chai.request(server.app)
@@ -36,8 +14,43 @@ describe('Login', function() {
         .send(user)
         .end(function(err, res){
           if(err)throw err;
-          res.to.have.string('Invaild credintials');
-          done();
+           expect(err).to.be.null;
+           expect(res).to.have.status(200);
+           done();
+      
+        });
+    });
+});
+
+describe('If user does not exist, they cant sign in', function() {
+    it('POST /api/auth/login should return invaild creds, if creds are invaild', function(done) {
+      user = {username: 'blue', password: 'password1'};
+      chai.request(server.app)
+        .post('/api/auth/login')
+        .send(user)
+        .end(function(err, res){
+          if(err)throw err;
+           expect(err).to.be.null;
+           expect(res.text).to.equal('user does not exist');
+           done();
+      
+        });
+    });
+});
+
+
+describe('Invaild password', function() {
+    it('POST /api/auth/login should return invaild creds, if creds are invaild', function(done) {
+      user = {username: 'stek', password: 'wrongpassword'};
+      chai.request(server.app)
+        .post('/api/auth/login')
+        .send(user)
+        .end(function(err, res){
+          if(err)throw err;
+           expect(err).to.be.null;
+           expect(res.text).to.equal('Invalid password');
+           done();
+      
         });
     });
 });
