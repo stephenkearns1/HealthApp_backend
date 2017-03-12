@@ -54,3 +54,20 @@ describe('Invaild password', function() {
         });
     });
 });
+
+describe('sucessfully logged in', function() {
+    it('POST /api/auth/login should return success, if successful', function(done) {
+       user.username ="seanautomationtest";
+      user.password = 'password';
+      chai.request(server.app)
+        .post('/api/auth/login')
+        .send(user)
+        .end(function(err, res){
+          if(err)throw err;
+           expect(err).to.be.null;
+           expect(res.text).to.equal('Invalid password');
+           done();
+      
+        });
+    });
+});
