@@ -135,7 +135,7 @@ app.post('/register', function(req, res){
    
 
     
-       var id = 4;//req.query.id;
+    var id = 4;//req.query.id;
     var firstName = req.body.firstname;
     var secondName= req.body.secondname;
     var username= req.body.username;
@@ -174,17 +174,19 @@ app.post('/register', function(req, res){
     age = expressSanitizer.sanitize(age);
     userMedicalCondition = expressSanitizer.sanitize(userMedicalCondition);
     conditionLevel = expressSanitizer.sanitize(conditionLevel);
-    password= bcrypt.hashSync(password, saltRounds);
+   
     
     
     if(username.length < 3){
         res.send('Invaild username');
     }
-    
+  
     if(password.length < 8){
+        
         res.send('Invaild password');
     }
     /*TODO: need to also ensure email is valid*/
+    password= bcrypt.hashSync(password, saltRounds);
     con.query('SELECT username FROM users WHERE username = ?', [username], function(err, data){
        if(err)
        {
