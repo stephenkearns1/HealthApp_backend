@@ -24,7 +24,9 @@ const saltRounds = 10;
 
 
 function CheckAuth(token, callback){
-    console.log(token);
+    if(token === undefined){
+        callback('token unreadable');
+    }
     con.query('SELECT token FROM users WHERE token = ?',[token],function(err, data) {
         if(err)throw err;
         else if(data.length === 0){
@@ -109,7 +111,7 @@ app.post("/api/auth/login", function(req, res){
             });
             
              //return token to user
-             res.send(jwtToken);
+             res.json([{'token':jwtToken}]);
          
          
         }
@@ -180,9 +182,9 @@ app.post('/register', function(req, res){
     if(username.length < 3){
         res.send('Invaild username');
     }
-  
+    
     if(password.length < 8){
-        
+    
         res.send('Invaild password');
     }
     /*TODO: need to also ensure email is valid*/
@@ -225,7 +227,14 @@ app.post('/register', function(req, res){
 
 app.post('/api/auth/save/accessCode', function(req, res) {
     var accessCode = req.body.accessCode;
+    var token = req.body.token;
     accessCode = expressSanitizer.sanitize(accessCode);
+    token = expressSanitizer.sanitize(token);
+    
+    CheckAuth(token, function(callback){
+       res.send(callback); 
+    });
+    
     con.query("UPDATE users SET accesscode = ?", accessCode, function(err) {
         if(err){
             logging.log(err);
