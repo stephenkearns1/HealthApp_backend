@@ -1,1 +1,1 @@
-8/3/2017 @ 23:50:27Error: connect ECONNREFUSED 127.0.0.1:3306
+Connection established
