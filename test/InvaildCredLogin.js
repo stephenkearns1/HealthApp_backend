@@ -1,5 +1,5 @@
 var chai = require('chai'), 
-chaiHttp = require('chai-http');
+    chaiHttp = require('chai-http');
 var server = require('../server.js');
 var should = chai.should;
 var expect = chai.expect;
@@ -41,7 +41,7 @@ describe('If user does not exist, they cant sign in', function() {
 
 describe('Invaild password', function() {
     it('POST /api/auth/login should return invaild creds, if creds are invaild', function(done) {
-      user = {username: 'stek', password: 'wrongpassword'};
+      user = {username: 'test1', password: 'wrongpassword'};
       chai.request(server.app)
         .post('/api/auth/login')
         .send(user)
@@ -56,16 +56,16 @@ describe('Invaild password', function() {
 });
 
 describe('sucessfully logged in', function() {
-    it('POST /api/auth/login should return success, if successful', function(done) {
-       user.username ="seanautomationtest";
-      user.password = 'password';
+    it('POST /api/auth/login should return, jsonwebtoken if login is successful', function(done) {
+      user.username ="test1";
+      user.password = 'password1';
       chai.request(server.app)
         .post('/api/auth/login')
         .send(user)
         .end(function(err, res){
           if(err)throw err;
            expect(err).to.be.null;
-           expect(res.text).to.equal('Invalid password');
+           expect(res.text).to.be.jsonwebtoken;
            done();
       
         });
