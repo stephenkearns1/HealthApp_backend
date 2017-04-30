@@ -1,25 +1,23 @@
-
 var express = require('express'); //Express web framework
 var bcrypt = require('bcrypt');
 var bodyParser = require("body-parser");
 var mysql = require("mysql");
+var config = require('../sensitive_data/config');
 var con = mysql.createConnection({
     host: "localhost",
-    user: "stephenkearns1",
-    password: "",
-    database: "c9"
+    user: config.user,
+    password: config.password,
+    database: config.database
 });
+
 var jwt = require("jsonwebtoken");
 var app = express(); //express app
 var expressSanitizer = require("sanitizer");//sanitizer for input
 var server; //the server
-var config = require('./config/config.js'); //get config's for use 
 var logging = require('./scripts/log.js'); //get config's for use 
+var fs = require("fs");
 app.use(bodyParser.json()); // for parsing application/json 
 app.use(bodyParser.urlencoded({ extended: false })); // for parsing application/x-www-form-urlencoded 
-
-//variables
-const saltRounds = 10;
 
 
 
@@ -27,9 +25,7 @@ function CheckAuth(token, callback) {
     if (token === undefined) {
         callback('token unreadable');
     }
-    con.query('SELECT token FROM users WHERE token = ?', [token], function (err, data) {
-        //data appears to be blank but token is not so there must be a problem in the query
-        console.log("data: " + data);
+    con.query('SELECT firstname FROM users WHERE token = ?', [token], function (err, data) {
         if (err) throw err;
         else if (data.length === 0) {
             callback('No matchs');
@@ -52,8 +48,6 @@ app.get("/", function (req, res) {
 
 app.post('/api/auth/check', function (req, res) {
     var token = req.body.token;
-    //verify token sent to server
-    console.log(token);
     CheckAuth(token, function (callback) {
         res.send(callback);
     });
@@ -64,8 +58,6 @@ app.post("/api/auth/login", function (req, res) {
 
     var username = req.body.username;
     var password = req.body.password;
-
-
 
     if (username === undefined || password === undefined) {
 
@@ -79,19 +71,14 @@ app.post("/api/auth/login", function (req, res) {
 
     con.query('SELECT * FROM users WHERE username = ?', [username], function (err, data) {
         if (err) {
-            console.log('error occured', err);
+            logging.log(err);
             res.send("Could not connect to database to validate username");
         }
         else if (data.length === 0) {
-            //user does not exist
-            console.log('TEST: users does not exist');
             res.send('user does not exist');
         }
         else {
-            //TODO instead of using the password I might generate the token based on the user input
-            //compares user sent and stored password
             if (!bcrypt.compareSync(password, data[0].password)) {
-                console.log('test: Invalid pasword');
                 res.send('Invalid password');
             }
             //Generate token
@@ -100,6 +87,7 @@ app.post("/api/auth/login", function (req, res) {
                 password: data[0].password
             };
 
+            // Refactor: to read secret from file instead of having it easily readBLE 
             var jwtToken = jwt.sign(payload, config.secret, { expiresIn: '24h' })
 
             con.query('UPDATE users SET token = ? WHERE username = ? ', [jwtToken, username], function (err) {
@@ -109,7 +97,8 @@ app.post("/api/auth/login", function (req, res) {
             });
 
             //return token to user
-            res.json({ 'token': jwtToken });
+            //res.json({ 'token': jwtToken });
+            res.send(jwtToken);
 
 
         }
@@ -120,9 +109,6 @@ app.post("/api/auth/login", function (req, res) {
 
 
 });
-
-
-//req stands for the request and res for response to the user 
 
 app.post('/register', function (req, res) {
 
@@ -154,12 +140,21 @@ app.post('/register', function (req, res) {
 
 
     if (id === undefined || username === undefined || password === undefined
-        || firstName == undefined || secondName == undefined || email == undefined
-        || userGoal == undefined || age == undefined || userMedicalCondition == undefined
-        || conditionLevel == undefined) {
+        || firstName === undefined || secondName === undefined || email === undefined
+        || userGoal === undefined || age === undefined) {
+        console.log("error line 159: Invalid params");
+        //keep the commented out console log incase of further errors
+        //console.log("id: " + id + "\n" +"username: " + username + "\n" + "password: " + password + "\n" + "firstname: " + firstName + "\n" + "secondname: " + secondName + "\n" + "email: " + email + "\n" + "user goal: " + userGoal + "\n" + "age: " + age);
         res.send("Invalid params!");
     }
 
+    if (userGoal == "I wish to improve my medical condition") {
+        if (userMedicalCondition === undefined) {
+            res.send("undefined condition");
+        } else if ((userMedicalCondition === "High Cholesterol" || userMedicalCondition == "Obesity") && conditionLevel == undefined) {
+            res.send("conditionLevel empty");
+        }
+    }
 
     //santize the user's input to clean up dirt strings and protect agaisnt common attacks such as XSS
     //Good ref for your own info: https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)
@@ -184,8 +179,14 @@ app.post('/register', function (req, res) {
 
         res.send('Invaild password');
     }
-    /*TODO: need to also ensure email is valid*/
-    password = bcrypt.hashSync(password, saltRounds);
+
+    var user = {
+        id: id, username: username, password: password,
+        firstname: firstName, secondname: secondName, age: age, email: email,
+        usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
+    };
+
+    password = bcrypt.hashSync(password, config.saltRounds);
     con.query('SELECT username FROM users WHERE username = ?', [username], function (err, data) {
         if (err) {
             logging.log('error occured', err);
@@ -195,17 +196,9 @@ app.post('/register', function (req, res) {
             res.send('Already taken');
         }
         else {
-
-            var user = {
-                id: id, username: username, password: password,
-                firstname: firstName, secondname: secondName, age: age, email: email,
-                usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
-            };
-
             con.query('INSERT INTO users SET ?', user, function (err) {
-                //if an error occurs throw it 
                 if (err) {
-                    console.log('Error:', err);
+                    logging.log(err)
                     res.send('failed to store data');
                 }
                 else {
@@ -218,6 +211,11 @@ app.post('/register', function (req, res) {
 
     });
 
+
+});
+
+//for testing purposes
+app.get('/test', function (req, res) {
 
 });
 
@@ -241,8 +239,6 @@ app.post('/api/auth/save/accessCode', function (req, res) {
 });
 
 function initServer() {
-
-    //connects to the database 
     con.connect(function (err) {
         if (err) {
             var currentdate = new Date();
