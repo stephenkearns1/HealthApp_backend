@@ -3,10 +3,10 @@
  #### Two-factor Authentication
  
  First approach 1:
-  - Require user to add two-factor authentication code within 21 days of intial login 
- - [x] Finish my changes
-- [ ] Push my commits to GitHub
-- [ ] Open a pull request
+  Require user to add two-factor authentication code within 21 days of intial login 
+   - [x] Add endpoint for storing the token 
+  - [ ] Send sms message with token to user for verification  
+  - [ ] Create verification endpoint
  Add endpoint for storing the token 
  
  ```javascript
