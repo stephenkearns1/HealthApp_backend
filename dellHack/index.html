@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</head>
+<body>
+
+
+<div class="container">
+
+<div class="container">
+
+<div class="col-md-12 col-lg-offset-2">
+    <div class="login-signup">
+      <div class="row">
+        <div class="col-md-8 nav-tab-holder">
+     
+      </div>
+
+      </div>
+
+      
+	  
+	  
+
+      <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="home">
+          <div class="row">
+
+            <div class="col-md-8 mobile-pull">
+              <article role="login">
+                <h3 class="text-center"><i class="fa fa-lock"></i>CRQ Status</h3>
+				
+               	<form role="form" action="" method="post" name="loginform">
+				<fieldset>
+					<legend>Status Update</legend>
+					
+					                 <div class="form-group">
+                      <label>Main Bundle</label><br>
+                      <input class="form-control" type="date" id="releaseDate" name="Release Date" placeholder="yyyy-mm-dd">
+                      <br>
+                      </div>
+                      <div class="form-group">
+                      <label>VPOD 1 & 4 Marked down:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 1 & 4 Deployment:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                      <div class="form-group">
+                      <label>VPOD 1 & 4 Down Layer Testing:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 1 & 4 Marked up:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 1 & 4 Testing uplayer:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 2 & 3 Marked down:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 2 & 3 Deployment:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 2 & 3 Down Layer Testing:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                       <div class="form-group">
+                      <label>VPOD 2 & 3 Moved up the layers:</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                      <div class="form-group">
+                      <label>Prodction: Final smoke test</label>
+                       <select class="form-control" id="sel1">
+                        <option>Started</option>
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+                      <div class="form-group">
+                      <label>Final Status</label>
+                       <select class="form-control" id="sel1">
+                        <option>Blocked</option>
+                        <option>Complete</option>
+                      </select>
+                      </div>
+
+                      <button type="button" class="btn btn-info btn-lg" id="myBtn">signup here</button>
+				</fieldset>
+			</form>
+                <footer role="signup" class="text-center">
+                  <ul>
+                    <li>
+                      <a href="#">Terms of Use</a>
+                    </li>
+                    <li>
+                      <a href="#">Privacy Statement</a>
+                    </li>
+                  </ul>
+                </footer>
+
+              </article>
+            </div>
+
+     
+
+          </div>
+          <!-- end of row -->
+        </div>
+        <!-- end of home -->
+
+
+  
+ 
+
+<script>
+$(document).ready(function(){
+    $("#myBtn").click(function(){
+        $("#myModal").modal();
+    });
+});
+</script>
+
+</body>
+</html>
