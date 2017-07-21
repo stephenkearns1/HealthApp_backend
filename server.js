@@ -61,8 +61,8 @@ app.post('/api/auth/check', function (req, res, err) {
         //verify token sent to server
         console.log(token);
         CheckAuth(token, function (callback, responseStatus) {
-            
-            res.json({ 'strResponse': callback, "status": responseStatus, 'fName': 'Hassan' });
+           
+            res.json({ 'messages':{'strResponse': callback, "status": responseStatus}, 'userDetails':{'fName': 'Hassan' }});
         });
 });
 
@@ -73,7 +73,7 @@ app.post("/api/auth/login", function (req, res) {
 
     if (username === undefined || password === undefined) {
 
-        res.json({'strResponse':"Invalid credentials", 'status':'Failed'});
+        res.json({"messages":{'strResponse':"Invalid credentials", 'status':'Failed'}});
     }
 
     //sanitize the input to protect agaisnt XSS
@@ -84,17 +84,17 @@ app.post("/api/auth/login", function (req, res) {
     con.query('SELECT * FROM users WHERE username = ?', [username], function (err, data) {
         if (err) {
             logging.log(err);
-            res.json({'strResponse':"Could not connect to database to validate username", 'status':'Failed'});
+            res.json({"messages":{'strResponse':"Could not connect to database to validate username", 'status':'Failed'}});
         }
         else if (data.length === 0) {
-            res.json({'strResponse':'user does not exist','status':'Failed'});
+            res.json({"messages":{'strResponse':'user does not exist','status':'Failed'}});
         }
         else {
             //TODO instead of using the password I might generate the token based on the user input
             //compares user sent and stored password
             if (!bcrypt.compareSync(password, data[0].password)) {
                 console.log('test: Invalid pasword');
-                res.json({'strResponse':'Invalid password','status':'Failed'});
+                res.json({"messages":{'strResponse':'Invalid password','status':'Failed'}});
                 
             }
             //Generate token
@@ -116,14 +116,14 @@ app.post("/api/auth/login", function (req, res) {
             con.query('UPDATE users SET token = ? WHERE username = ? ', [jwtToken, username], function (err) {
                 if (err) throw err;
                 //not sure it will continue after exeption is thrown but I will find out eventually 
-                res.json({'strResponse':'failed to store token', 'status':'Failed'});
+                res.json({"messages":{'strResponse':'failed to store token', 'status':'Failed'}});
             });
 
             //return token to user
             //NOTE: Still testing
             //called strResponse (string response) so the client side knows this is not belonging to the object passed back and converted into a java class, in this case the strResponse is the token
             //but in other classes it could be success or something along those lines.  
-            res.json({ 'strResponse': jwtToken,'status':'Success', 'fName': 'Hassan' });
+            res.json({"messages":{ 'strResponse': jwtToken,'status':'Success'}, "userDetails":{ 'fName': 'Hassan' }});
             //res.send(jwtToken);
 
 
@@ -174,14 +174,14 @@ app.post('/register', function (req, res) {
         console.log("error line 159: Invalid params" + username);
         //keep the commented out console log incase of further errors
        //console.log("id: " + id + "\n" +"username: " + username + "\n" + "password: " + password + "\n" + "firstname: " + firstName + "\n" + "secondname: " + secondName + "\n" + "email: " + email + "\n" + "user goal: " + userGoal + "\n" + "age: " + age);
-        res.json({'strResponse':"Invalid params!", 'status':'Failed'});
+        res.json({"messages":{'strResponse':"Invalid params!", 'status':'Failed'}});
     }
     
     if(userGoal == "I wish to improve my medical condition"){
         if(userMedicalCondition === undefined){
-            res.json({'strResponse':"undefined condition", 'status':'Failed'});
+            res.json({"messages":{'strResponse':"undefined condition", 'status':'Failed'}});
         }else if((userMedicalCondition === "High Cholesterol" || userMedicalCondition == "Obesity") && conditionLevel == undefined){
-            res.json({'strResponse':"conditionLevel empty", 'status':'Failed'});
+            res.json({"messages":{'strResponse':"conditionLevel empty", 'status':'Failed'}});
         }
     }
 
@@ -201,25 +201,25 @@ app.post('/register', function (req, res) {
 
 
     if (username.length < 3) {
-        res.json({'strResponse':'Invaild username','status':'Failed'});
+        res.json({"messages":{'strResponse':'Invaild username','status':'Failed'}});
     }
 
     if (password.length < 8) {
 
-        res.json({'strResponse':'Invaild password','status':'Failed'});
+        res.json({"messages":{'strResponse':'Invaild password','status':'Failed'}});
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
     con.query('SELECT username, email FROM users WHERE username = ? AND email = ?', [username, email], function (err, chkUsername,chkEmail) {
         if (err) {
             logging.log('error occured', err);
-            res.json({'strResponse':"Could not connect to database to validate username",'status':'Failed'});
+            res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
         }
         else if (chkUsername.length != 0) {
-            res.json({'strResponse':'Username Already taken','status':'Failed'});
+            res.json({"messages":{'strResponse':'Username Already taken','status':'Failed'}});
         }
         else if (chkEmail.length != 0) {
-            res.json({'strResponse':'Email Already taken','status':'Failed'});
+            res.json({"messages":{'strResponse':'Email Already taken','status':'Failed'}});
         }
         else {
 
@@ -233,10 +233,10 @@ app.post('/register', function (req, res) {
                 //if an error occurs throw it 
                 if (err) {
                     console.log('Error:', err);
-                    res.json({'strResponse':'failed to store data','status':'Failed'});
+                    res.json({"messages":{'strResponse':'failed to store data','status':'Failed'}});
                 }
                 else {
-                    res.json({'status':'Success'});
+                    res.json({"messages":{'status':'Success'}});
                 }
 
                 //TODO add conditons for if username exist and other vaildation 
@@ -279,7 +279,7 @@ app.post('/api/auth/save/accessCode', function (req, res) {
 app.post('/dellhack/status',function (req, res) {
     
     var release = req.body.release;
-    con.query('SELECT * FROM Status WHERE release_date = ? ', [release], function (err, data) {
+    con.query('SELECT * FROM status WHERE release_date = ? ', [release], function (err, data) {
         if (err) {
             logging.log(err);
         }
@@ -316,7 +316,7 @@ app.post('/dellhack/status/update',function (req, res){
                 final_smoke: final_smoke, status: final_status
             };
 
-            con.query('INSERT INTO Status SET ?', status, function (err) {
+            con.query('INSERT INTO status SET ?', status, function (err) {
                 //if an error occurs throw it 
                 if (err) {
                     console.log('Error:', err);
