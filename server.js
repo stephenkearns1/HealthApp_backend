@@ -210,16 +210,19 @@ app.post('/register', function (req, res) {
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
-    con.query('SELECT username, email FROM users WHERE username = ? AND email = ?', [username, email], function (err, chkUsername,chkEmail) {
+    con.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], function (err, data) {
+        console.log('printing data', data[0].username);
+        
         if (err) {
             logging.log('error occured', err);
             res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
         }
-        else if (chkUsername.length != 0) {
+        else if (data[0].username != null && data[0].username.length != 0) {
             res.json({"messages":{'strResponse':'Username Already taken','status':'Failed'}});
         }
-        else if (chkEmail.length != 0) {
-            res.json({"messages":{'strResponse':'Email Already taken','status':'Failed'}});
+        else if (data[0].email != null && data[0].email.length != 0) {
+            
+            res.json({"messages":{'strResponse':'Email Already taken ','status':'Failed'}});
         }
         else {
 
@@ -236,7 +239,7 @@ app.post('/register', function (req, res) {
                     res.json({"messages":{'strResponse':'failed to store data','status':'Failed'}});
                 }
                 else {
-                    res.json({"messages":{'status':'Success'}});
+                    res.json({"messages":{'strResponse':'Success', 'status':'Success', }});
                 }
 
                 //TODO add conditons for if username exist and other vaildation 
