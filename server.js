@@ -37,11 +37,12 @@ function CheckAuth(token, callback) {
             callback('No matchs','Failed');
         }
         //TODO add secret to file and read it in `
+        //The error is here, it seems to claim invalid even if it is valid as it still returns a matching user
         jwt.verify(token, config.secret, function (err, decoded) {
             if (err) {
                 callback('invaild', 'Failed');
             } else {
-                callback('vaild', "Success");
+                callback('valid', "Success");
             }
         });
     });
@@ -49,6 +50,7 @@ function CheckAuth(token, callback) {
 //Make generic if need again
 function getSecret(callback){
     var data = fs.readFileSync('../sensitive_data/secret.txt');
+    console.log("The secret is: " + data);
     return data;
 }
 
@@ -81,7 +83,7 @@ app.post("/api/auth/login", function (req, res) {
     password = expressSanitizer.sanitize(password);
 
 
-    con.query('SELECT * FROM users WHERE username = ?', [username], function (err, data) {
+    con.query('SELECT * FROM users WHERE username = ?', [username, password], function (err, data) {
         if (err) {
             logging.log(err);
             res.json({"messages":{'strResponse':"Could not connect to database to validate username", 'status':'Failed'}});
@@ -105,10 +107,10 @@ app.post("/api/auth/login", function (req, res) {
             
          
             //get secret 
-            var secret = getSecret();
-               getSecret(function (callback) {
+            var secret = config.secret;/* getSecret();
+              getSecret(function (callback) {
                     secret = callback;
-                });
+                });*/
 
             // Refactor: to read secret from file instead of having it easily readBLE 
             var jwtToken = jwt.sign(payload, secret, { expiresIn: '24h' })
@@ -210,42 +212,50 @@ app.post('/register', function (req, res) {
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
-    con.query('SELECT * FROM users WHERE username = ? OR email = ?', [username, email], function (err, data) {
-        console.log('printing data', data[0].username);
+    con.query('SELECT username FROM users WHERE username = ?', [username], function (err, usernameData) {
+        
         
         if (err) {
             logging.log('error occured', err);
             res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
         }
-        else if (data[0].username != null && data[0].username.length != 0) {
+        else if (!(usernameData.length === 0)) {
             res.json({"messages":{'strResponse':'Username Already taken','status':'Failed'}});
-        }
-        else if (data[0].email != null && data[0].email.length != 0) {
-            
-            res.json({"messages":{'strResponse':'Email Already taken ','status':'Failed'}});
-        }
-        else {
-
-            var user = {
-                id: id, username: username, password: password,
-                firstname: firstName, secondname: secondName, age: age, email: email,
-                usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
-            };
-
-            con.query('INSERT INTO users SET ?', user, function (err) {
-                //if an error occurs throw it 
+        }else{
+            //node js's way of cheking undefined values is terrible so I had to split up the query into two in order to check both username and email
+            //very inefficient hopefully I will find a better way of testing for undefined variables
+            //I will see at a later date if a try catch will do the trick for me
+            con.query('SELECT email FROM users WHERE email = ?', [email], function (err, emailData) {
                 if (err) {
-                    console.log('Error:', err);
-                    res.json({"messages":{'strResponse':'failed to store data','status':'Failed'}});
+                    logging.log('error occured', err);
+                    res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
+                }
+                else if (!(emailData.length === 0)) {
+                    res.json({"messages":{'strResponse':'Email Already taken','status':'Failed'}});
                 }
                 else {
-                    res.json({"messages":{'strResponse':'Success', 'status':'Success', }});
-                }
 
-                //TODO add conditons for if username exist and other vaildation 
+                    var user = {
+                        id: id, username: username, password: password,
+                        firstname: firstName, secondname: secondName, age: age, email: email,
+                        usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
+                    };
+
+                    con.query('INSERT INTO users SET ?', user, function (err) {
+                        //if an error occurs throw it 
+                        if (err) {
+                            console.log('Error:', err);
+                            res.json({"messages":{'strResponse':'failed to store data','status':'Failed'}});
+                        }
+                        else {
+                            res.json({"messages":{'strResponse':'Success', 'status':'Success', }});
+                        }
+
+                    //TODO add conditons for if username exist and other vaildation 
+                    });
+                }
             });
         }
-
     });
 
 
