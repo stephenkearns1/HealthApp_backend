@@ -1,0 +1,22 @@
+8/9/2017 - 11:19:37@:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+9/9/2017 - 16:39:49@Test_auth:Error: Cannot enqueue Query after fatal error.
+10/9/2017 - 20:47:32@undefined:Error: ER_PARSE_ERROR: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near '?' at line 1

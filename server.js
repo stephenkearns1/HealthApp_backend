@@ -1,47 +1,137 @@
+/* Modules */
 var express = require('express'); //Express web framework
 var bcrypt = require('bcrypt');
 var bodyParser = require("body-parser");
 var mysql = require("mysql");
 var config = require('../sensitive_data/config');
+var Promise = require("bluebird");
+var jwt = require("jsonwebtoken");
+var expressSanitizer = require("sanitizer");//sanitizer for input
+var bodyParserJsonError = require('express-body-parser-json-error');
+var fs = require("fs");
+/* helpers */
+var connection = require('./Helpers/DbConnectionManager');
+var logging = require('./scripts/log.js'); //get config's for use 
 var con = mysql.createConnection({
     host: "localhost",
     user: config.user,
     password: config.password,
     database: config.database
 });
-console.log(config.user);
-var jwt = require("jsonwebtoken");
+
+/* Variables */
 var app = express(); //express app
-var expressSanitizer = require("sanitizer");//sanitizer for input
 var server; //the server
-var logging = require('./scripts/log.js'); //get config's for use 
-var fs = require("fs");
-var bodyParserJsonError = require('express-body-parser-json-error');
+const saltRounds = 10;
+
 app.use(bodyParser.json()); // for parsing application/json 
 app.use(bodyParser.urlencoded({ extended: false })); // for parsing application/x-www-form-urlencoded 
 app.use(bodyParserJsonError());
 
 
-//variables
-const saltRounds = 10;
 
 
+app.post('/test2', CheckAuth, function (req, res){
+      
+      
+      res.send('Continue');
+       
+        
+});
 
-function CheckAuth(token, callback) {
+app.get('/test',function (req, res){
+        var sql = 'SELECT * FROM users';
+        connection.query(sql).then(function(rows){
+            res.send(rows);
+        }).catch(TypeError,function(e){
+            res.send(e);
+        }).catch(ReferenceError,function(e){
+            res.send(e);
+        }).catch(function(e){
+            //catch other errors
+            res.send(e);
+        });
+      
+       
+        
+});
+
+
+function CheckAuth(req, res, next) {
+    var token = req.body.token;
+    console.log(token)
     if (token === undefined) {
-        callback('token unreadable');
+        res.status(400).json({ 'messages': { 'strResponse': "token unreadable", 'status': 'Failed' } });
+    }
+    connection.query(mysql.format('SELECT username FROM users WHERE token = ?',token)).then(function(result){
+        if (result.length === 0) {
+         res.status(401).send("Unauthorized");
+        }
+        //TODO add secret to file and read it in `
+        //The error is here, it seems to claim invalid even if it is valid as it still returns a matching user
+        jwt.verify(token, config.secret, function(err, decoded) {
+            if (err) {
+                  res.status(401).send("Unauthorized");
+            }
+            else {
+              next();
+            }
+        });
+        
+    }).catch(function(e){
+            //catch other errors
+            res.send(e);
+        });
+   
+
+}
+
+function ValidateToken(req, res) {
+    var token = req.body.token;
+    console.log(token)
+ 
+       if (token === undefined) {
+        res.status(400).json({ 'messages': { 'strResponse': "token unreadable", 'status': 'Failed' } });
+    }
+    connection.query(mysql.format('SELECT username FROM users WHERE token = ?',token)).then(function(result){
+        if (result.length === 0) {
+         res.status(401).send("Unauthorized");
+        }
+        //TODO add secret to file and read it in `
+        //The error is here, it seems to claim invalid even if it is valid as it still returns a matching user
+        jwt.verify(token, config.secret, function(err, decoded) {
+            if (err) {
+                  res.status(401).send("Unauthorized");
+            }
+            else {
+              res.status(200).send('Success');
+            }
+        });
+        
+    }).catch(function(e){
+            //catch other errors
+            res.send(e);
+        });
+   
+
+}
+
+function CheckAuthtest(token, callback) {
+    if (token === undefined) {
+        callback('token unreadable','Failed');
     }
     con.query('SELECT firstname FROM users WHERE token = ?', [token], function (err, data) {
         if (err) throw err;
         else if (data.length === 0) {
-            callback('No matchs');
+            callback('No matchs','Failed');
         }
         //TODO add secret to file and read it in `
+        //The error is here, it seems to claim invalid even if it is valid as it still returns a matching user
         jwt.verify(token, config.secret, function (err, decoded) {
             if (err) {
-                callback('invaild');
+                callback('invaild', 'Failed');
             } else {
-                callback('vaild');
+                callback('valid', "Success");
             }
         });
     });
@@ -49,6 +139,7 @@ function CheckAuth(token, callback) {
 //Make generic if need again
 function getSecret(callback){
     var data = fs.readFileSync('../sensitive_data/secret.txt');
+    console.log("The secret is: " + data);
     return data;
 }
 
@@ -56,15 +147,7 @@ app.get("/", function (req, res) {
     res.send('Welcome to the medicalApp API! - documentation on using the api, can be found at www.');
 });
 
-app.post('/api/auth/check', function (req, res, err) {
-        var token = req.body.token;
-        //verify token sent to server
-        console.log(token);
-        CheckAuth(token, function (callback) {
-            
-            res.json({ 'strResponse': callback, 'fName': 'Hassan' });
-        });
-});
+app.post('/api/auth/check', ValidateToken);
 
 app.post("/api/auth/login", function (req, res) {
 
@@ -73,42 +156,37 @@ app.post("/api/auth/login", function (req, res) {
 
     if (username === undefined || password === undefined) {
 
-        res.send("Invalid credentials");
+        res.json({"messages":{'strResponse':"Invalid credentials", 'status':'Failed'}});
     }
 
     //sanitize the input to protect agaisnt XSS
     username = expressSanitizer.sanitize(username);
     password = expressSanitizer.sanitize(password);
-
-
-    con.query('SELECT * FROM users WHERE username = ?', [username], function (err, data) {
-        if (err) {
-            logging.log(err);
-            res.send("Could not connect to database to validate username");
-        }
-        else if (data.length === 0) {
-            res.send('user does not exist');
+    
+    connection.query(mysql.format('SELECT * FROM users WHERE username = ?', username)).then(function(result){
+        if (result.length === 0) {
+            res.json({"messages":{'strResponse':'user does not exist','status':'Failed'}});
         }
         else {
             //TODO instead of using the password I might generate the token based on the user input
             //compares user sent and stored password
-            if (!bcrypt.compareSync(password, data[0].password)) {
+            if (!bcrypt.compareSync(password, result[0].password)) {
                 console.log('test: Invalid pasword');
-                res.send('Invalid password');
+                res.json({"messages":{'strResponse':'Invalid password','status':'Failed'}});
                 
             }
             //Generate token
             var payload = {
                 id: username,
-                password: data[0].password
+                password: result[0].password
             };
             
          
             //get secret 
-            var secret = getSecret();
-               getSecret(function (callback) {
+            var secret = config.secret;/* getSecret();
+              getSecret(function (callback) {
                     secret = callback;
-                });
+                });*/
 
             // Refactor: to read secret from file instead of having it easily readBLE 
             var jwtToken = jwt.sign(payload, secret, { expiresIn: '24h' })
@@ -116,24 +194,29 @@ app.post("/api/auth/login", function (req, res) {
             con.query('UPDATE users SET token = ? WHERE username = ? ', [jwtToken, username], function (err) {
                 if (err) throw err;
                 //not sure it will continue after exeption is thrown but I will find out eventually 
-                res.send("failed to store token");
+                res.json({"messages":{'strResponse':'failed to store token', 'status':'Failed'}});
             });
 
             //return token to user
             //NOTE: Still testing
             //called strResponse (string response) so the client side knows this is not belonging to the object passed back and converted into a java class, in this case the strResponse is the token
             //but in other classes it could be success or something along those lines.  
-            res.json({ 'strResponse': jwtToken, 'fName': 'Hassan' });
+            res.json({"messages":{ 'strResponse': jwtToken,'status':'Success'}, "userDetails":{ 'fName': 'Hassan' }});
             //res.send(jwtToken);
 
 
         }
 
-
-    });
-
-
-
+    }).catch(TypeError,function(e){
+            logging.systemLog(e);
+        }).catch(ReferenceError,function(e){
+            logging.systemLog(e);
+        }).catch(function(e){
+            //catch other errors
+            logging.errorLog(username,e);
+            res.json({"messages":{'strResponse':"Could not connect to database to validate username", 'status':'Failed'}});
+        });
+     
 });
 
 
@@ -171,17 +254,17 @@ app.post('/register', function (req, res) {
     if (id === undefined || username === undefined || password === undefined
         || firstName === undefined || secondName === undefined || email === undefined
         || userGoal === undefined || age === undefined) {
-        console.log("error line 159: Invalid params");
+        console.log("error line 159: Invalid params" + username);
         //keep the commented out console log incase of further errors
        //console.log("id: " + id + "\n" +"username: " + username + "\n" + "password: " + password + "\n" + "firstname: " + firstName + "\n" + "secondname: " + secondName + "\n" + "email: " + email + "\n" + "user goal: " + userGoal + "\n" + "age: " + age);
-        res.send("Invalid params!");
+        res.json({"messages":{'strResponse':"Invalid params!", 'status':'Failed'}});
     }
     
     if(userGoal == "I wish to improve my medical condition"){
         if(userMedicalCondition === undefined){
-            res.send("undefined condition");
+            res.json({"messages":{'strResponse':"undefined condition", 'status':'Failed'}});
         }else if((userMedicalCondition === "High Cholesterol" || userMedicalCondition == "Obesity") && conditionLevel == undefined){
-            res.send("conditionLevel empty");
+            res.json({"messages":{'strResponse':"conditionLevel empty", 'status':'Failed'}});
         }
     }
 
@@ -201,53 +284,64 @@ app.post('/register', function (req, res) {
 
 
     if (username.length < 3) {
-        res.send('Invaild username');
+        res.json({"messages":{'strResponse':'Invaild username','status':'Failed'}});
     }
 
     if (password.length < 8) {
 
-        res.send('Invaild password');
+        res.json({"messages":{'strResponse':'Invaild password','status':'Failed'}});
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
-    con.query('SELECT username FROM users WHERE username = ?', [username], function (err, data) {
+    con.query('SELECT username FROM users WHERE username = ?', [username], function (err, usernameData) {
+        
+        
         if (err) {
-            logging.log('error occured', err);
-            res.send("Could not connect to database to validate username");
+            logging.errorLog(username, err);
+            res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
         }
-        else if (data.length != 0) {
-            res.send('Already taken');
-        }
-        else {
-
-            var user = {
-                id: id, username: username, password: password,
-                firstname: firstName, secondname: secondName, age: age, email: email,
-                usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
-            };
-
-            con.query('INSERT INTO users SET ?', user, function (err) {
-                //if an error occurs throw it 
+        else if (!(usernameData.length === 0)) {
+            res.json({"messages":{'strResponse':'Username Already taken','status':'Failed'}});
+        }else{
+            //node js's way of cheking undefined values is terrible so I had to split up the query into two in order to check both username and email
+            //very inefficient hopefully I will find a better way of testing for undefined variables
+            //I will see at a later date if a try catch will do the trick for me
+            con.query('SELECT email FROM users WHERE email = ?', [email], function (err, emailData) {
                 if (err) {
-                    console.log('Error:', err);
-                    res.send('failed to store data');
+                    logging.errorLog(username,err);
+                    res.json({"messages":{'strResponse':"Could not connect to database to validate username",'status':'Failed'}});
+                }
+                else if (!(emailData.length === 0)) {
+                    res.json({"messages":{'strResponse':'Email Already taken','status':'Failed'}});
                 }
                 else {
-                    res.send('success');
-                }
 
-                //TODO add conditons for if username exist and other vaildation 
+                    var user = {
+                        id: id, username: username, password: password,
+                        firstname: firstName, secondname: secondName, age: age, email: email,
+                        usergoal: userGoal, medicalcondition: userMedicalCondition, conditionlevel: conditionLevel
+                    };
+
+                    con.query('INSERT INTO users SET ?', user, function (err) {
+                        //if an error occurs throw it 
+                        if (err) {
+                            console.log('Error:', err);
+                            res.json({"messages":{'strResponse':'failed to store data','status':'Failed'}});
+                        }
+                        else {
+                            res.json({"messages":{'strResponse':'Success', 'status':'Success', }});
+                        }
+
+                    //TODO add conditons for if username exist and other vaildation 
+                    });
+                }
             });
         }
-
     });
 
 
 });
 
-app.get('/test', function (req, res){
-    
-});
 
 app.post('/api/auth/save/accessCode', function (req, res) {
     var accessCode = req.body.accessCode;
@@ -255,105 +349,24 @@ app.post('/api/auth/save/accessCode', function (req, res) {
     accessCode = expressSanitizer.sanitize(accessCode);
     token = expressSanitizer.sanitize(token);
 
-    CheckAuth(token, function (callback) {
-        res.send(callback);
+    CheckAuth(token, function (callback, responseStatus) {
+        res.json({'strResponse':callback, 'status':responseStatus});
     });
 
     con.query("UPDATE users SET accesscode = ?", accessCode, function (err) {
         if (err) {
-            logging.log(err);
+            logging.errorLog(err);
         } else {
-            res.send('updated');
+            res.json({'strResponse':'updated','status':'Success'});
         }
     })
 });
 
-/* 
-
-
-*********** Two below functions being used for internal hackaton, please dont delete yet
-*/ /*
-app.post('/dellhack/status',function (req, res) {
-    
-    var release = req.body.release;
-    con.query('SELECT * FROM Status WHERE release_date = ? ', [release], function (err, data) {
-        if (err) {
-            logging.log(err);
-        }
-        //return token to user
-        //res.json({ 'token': jwtToken });
-        
-    res.json(data);
-    });
-
-});
-app.post('/dellhack/status/update',function (req, res){
-    console.log('Made it');
-    var releaseNum = req.body.releaseDate;
-    var vpod14_down = req.body.vpod14_down;
-    var vpod14_deployed = req.body.vpod14_deployment;
-    var vpod14_down_test = req.body.vpod14_down_test;
-    var vpod14_up = req.body.vpod14_up;
-    var vpod14_test_up = req.body.vpod14_test_up;
-    var vpod23_down = req.body.vpod23_down;
-    var vpod23_deployment = req.body.vpod23_deployment;
-    var vpod23_testing = req.body.vpod23_testing;
-    var vpod23_up = req.body.vpod23_up;
-    var final_smoke = req.body.final_smoke;
-    var final_status = req.body.final_status;
-
-
-    console.log(req.body);
-
-
-            var status = {
-                release_date: releaseNum, vpod1_4_down: vpod14_down, vpod1_4_deployed: vpod14_deployed,
-                vpod1_4_testing: vpod14_down_test, 	vpod1_4_up: vpod14_up, 	vpod1_4_up_testing: vpod14_test_up, vpod2_3_down: vpod23_down,
-                vpod2_3_deployment: vpod23_deployment, vpod2_4_testing: vpod23_testing, vpod2_3_up: vpod23_up,
-                final_smoke: final_smoke, status: final_status
-            };
-
-            con.query('INSERT INTO Status SET ?', status, function (err) {
-                //if an error occurs throw it 
-                if (err) {
-                    console.log('Error:', err);
-                    res.send('failed to store data');
-                }
-                else {
-                    res.send('success');
-                }
-
-                //TODO add conditons for if username exist and other vaildation 
-            });
-        });
-
- */ 
-
-function initServer() {
-    con.connect(function (err) {
-        if (err) {
-            var currentdate = new Date();
-            var datetime = currentdate.getDate() + "/"
-                + (currentdate.getMonth() + 1) + "/"
-                + currentdate.getFullYear() + " @ "
-                + currentdate.getHours() + ":"
-                + currentdate.getMinutes() + ":"
-                + currentdate.getSeconds();
-            logging.log(datetime + err)
-            return;
-        }
-
-        logging.log("Connection established");
-
-
-    });
 
 
 
-    //start the server
-    startServer();
+  
 
-}
 
 function startServer() {
 
@@ -366,8 +379,9 @@ function startServer() {
 
 }
 
-//init the server 
-initServer();
+
+//start the server
+startServer();
 
 //export for testing
 exports.app = app;
