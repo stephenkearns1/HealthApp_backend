@@ -12,6 +12,7 @@ var fs = require("fs");
 /* helpers */
 var connection = require('./Helpers/DbConnectionManager');
 var logging = require('./scripts/log.js'); //get config's for use 
+/* Remove after refactor - to use helper */
 var con = mysql.createConnection({
     host: "localhost",
     user: config.user,
