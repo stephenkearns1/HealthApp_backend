@@ -13,7 +13,7 @@ Promise.promisifyAll(require("../node_modules/mysql/lib/Pool").prototype);
 
 
 var pool = mysql.createPool({
-    connectionLimit : 10,    
+    connectionLimit: 10,
     host: "localhost",
     user: config.user,
     password: config.password,
@@ -21,26 +21,24 @@ var pool = mysql.createPool({
 });
 
 console.log(config.user);
-function getConnection()
-{
+
+function getConnection() {
     //acquire a connection from the pool, setting automation resource managment 
-    return pool.getConnectionAsync().disposer(function(connection){
-       //return the connection to pool, for further use
-       connection.release(); 
+    return pool.getConnectionAsync().disposer(function(connection) {
+        //return the connection to pool, for further use
+        connection.release();
     });
 }
 
-function Query(command)
-{
-    return using(getConnection(), function(connection){
+function Query(command) {
+    return using(getConnection(), function(connection) {
         console.log('Connection established');
         return connection.queryAsync(command);
         //create custom errors for network/timeout
     });
-    
+
 }
 
 module.exports = {
-    query : Query,
-    getSqlConnection : getConnection
+    query: Query,
 };
