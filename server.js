@@ -335,24 +335,18 @@ app.post('/register', function(req, res) {
 });
 
 
-app.post('/api/auth/save/accessCode', function(req, res) {
+app.post('/api/auth/save/accessCode', CheckAuth, function(req, res) {
     var accessCode = req.body.accessCode;
     var token = req.body.token;
     accessCode = expressSanitizer.sanitize(accessCode);
     token = expressSanitizer.sanitize(token);
 
-    CheckAuth(token, function(callback, responseStatus) {
-        res.json({ 'strResponse': callback, 'status': responseStatus });
-    });
-
-    con.query("UPDATE users SET accesscode = ?", accessCode, function(err) {
-        if (err) {
-            logging.errorLog(err);
-        }
-        else {
-            res.json({ 'strResponse': 'updated', 'status': 'Success' });
-        }
+    connection.query(mysql.format('UPDATE users SET accesscode = ?',accessCode)).then(function(result){
+       //do something with results  
+    }).catch(function(e){
+        logging.errorLog(e);
     })
+      
 });
 
 
