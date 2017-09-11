@@ -75,7 +75,9 @@ describe('Register endpoint', function() {
 describe('Register endpoint', function() {
     it('POST /register - should return Already taken, if username already exists', function(done) {
       user.username ="seanautomationtest";
+      user.firstname = 'paul';
       user.secondname= 'hayes';
+      user.password = "password"
       user.email= 'paulhayez@gmail.com';
       user.goal= 'Get fit';
       user.age= '34';
