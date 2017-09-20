@@ -315,63 +315,6 @@ app.post('/register', function(req, res) {
     });
     
 
-/*
-    con.query('SELECT username FROM users WHERE username = ?', [username], function(err, usernameData) {
-
-
-        if (err) {
-            logging.errorLog(username, err);
-            res.json({ "messages": { 'strResponse': "Could not connect to database to validate username", 'status': 'Failed' } });
-        }
-        else if (!(usernameData.length === 0)) {
-            res.json({ "messages": { 'strResponse': 'Username Already taken', 'status': 'Failed' } });
-        }
-        else {
-            //node js's way of cheking undefined values is terrible so I had to split up the query into two in order to check both username and email
-            //very inefficient hopefully I will find a better way of testing for undefined variables
-            //I will see at a later date if a try catch will do the trick for me
-            con.query('SELECT email FROM users WHERE email = ?', [email], function(err, emailData) {
-                if (err) {
-                    logging.errorLog(username, err);
-                    res.json({ "messages": { 'strResponse': "Could not connect to database to validate username", 'status': 'Failed' } });
-                }
-                else if (!(emailData.length === 0)) {
-                    res.json({ "messages": { 'strResponse': 'Email Already taken', 'status': 'Failed' } });
-                }
-                else {
-
-                    var user = {
-                        id: id,
-                        username: username,
-                        password: password,
-                        firstname: firstName,
-                        secondname: secondName,
-                        age: age,
-                        email: email,
-                        usergoal: userGoal,
-                        medicalcondition: userMedicalCondition,
-                        conditionlevel: conditionLevel
-                    };
-
-                    con.query('INSERT INTO users SET ?', user, function(err) {
-                        //if an error occurs throw it 
-                        if (err) {
-                            console.log('Error:', err);
-                            res.json({ "messages": { 'strResponse': 'failed to store data', 'status': 'Failed' } });
-                        }
-                        else {
-                            res.json({ "messages": { 'strResponse': 'Success', 'status': 'Success', } });
-                        }
-
-                        //TODO add conditons for if username exist and other vaildation 
-                    });
-                }
-            });
-        }
-    });
-    */
-
-
 });
 
 
