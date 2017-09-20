@@ -137,7 +137,7 @@ app.post("/api/auth/login", function(req, res) {
     var password = req.body.password;
 
     if (username === undefined || password === undefined) {
-
+ 
         res.json({ "messages": { 'strResponse': "Invalid credentials", 'status': 'Failed' } });
     }
 
@@ -228,6 +228,7 @@ app.post('/register', function(req, res) {
     var age = req.body.age;
     var userMedicalCondition = req.body.medicalCondition;
     var conditionLevel = req.body.level;
+    var user; 
 
 
     console.log(req.body);
@@ -277,6 +278,44 @@ app.post('/register', function(req, res) {
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
+    
+    connection.query(mysql.format('SELECT * FROM users WHERE username = ? OR email = ?', [username, email])).then(function(results) {
+        console.log(results)
+        if (!(results.length === 0)) {
+            if (results[0].username === username) {
+                res.json({ "messages": { 'strResponse': 'Username Already taken', 'status': 'Failed' } });
+            }
+            else if (results[0].email === email) {
+                res.json({ "messages": { 'strResponse': 'Email Already taken', 'status': 'failed', } });
+            }
+
+          
+        }else{
+             user = {
+                id: id,
+                username: username,
+                password: password,
+                firstname: firstName,
+                secondname: secondName,
+                age: age,
+                email: email,
+                usergoal: userGoal,
+                medicalcondition: userMedicalCondition,
+                conditionlevel: conditionLevel
+            };
+            return connection.query(mysql.format('INSERT INTO users SET ?',user)).then(function() {
+               //The users has been to the db so notify them
+               res.json({ "messages": { 'strResponse': 'Success', 'status': '200', } });
+                
+            });
+        }
+        
+    }).catch(function(e) {
+        logging.errorLog(username, e);
+    });
+    
+
+/*
     con.query('SELECT username FROM users WHERE username = ?', [username], function(err, usernameData) {
 
 
@@ -330,6 +369,7 @@ app.post('/register', function(req, res) {
             });
         }
     });
+    */
 
 
 });
