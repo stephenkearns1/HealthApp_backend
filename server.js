@@ -12,13 +12,6 @@ var fs = require("fs");
 /* helpers */
 var connection = require('./Helpers/DbConnectionManager');
 var logging = require('./scripts/log.js'); //get config's for use 
-/* Remove after refactor - to use helper */
-var con = mysql.createConnection({
-    host: "localhost",
-    user: config.user,
-    password: config.password,
-    database: config.database
-});
 
 /* Variables */
 var app = express(); //express app
@@ -137,7 +130,7 @@ app.post("/api/auth/login", function(req, res) {
     var password = req.body.password;
 
     if (username === undefined || password === undefined) {
- 
+
         res.json({ "messages": { 'strResponse': "Invalid credentials", 'status': 'Failed' } });
     }
 
@@ -228,7 +221,7 @@ app.post('/register', function(req, res) {
     var age = req.body.age;
     var userMedicalCondition = req.body.medicalCondition;
     var conditionLevel = req.body.level;
-    var user; 
+    var user;
 
 
     console.log(req.body);
@@ -278,7 +271,7 @@ app.post('/register', function(req, res) {
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
-    
+
     connection.query(mysql.format('SELECT * FROM users WHERE username = ? OR email = ?', [username, email])).then(function(results) {
         console.log(results)
         if (!(results.length === 0)) {
@@ -289,9 +282,10 @@ app.post('/register', function(req, res) {
                 res.json({ "messages": { 'strResponse': 'Email Already taken', 'status': 'failed', } });
             }
 
-          
-        }else{
-             user = {
+
+        }
+        else {
+            user = {
                 id: id,
                 username: username,
                 password: password,
@@ -303,17 +297,17 @@ app.post('/register', function(req, res) {
                 medicalcondition: userMedicalCondition,
                 conditionlevel: conditionLevel
             };
-            return connection.query(mysql.format('INSERT INTO users SET ?',user)).then(function() {
-               //The users has been to the db so notify them
-               res.json({ "messages": { 'strResponse': 'Success', 'status': '200', } });
-                
+            return connection.query(mysql.format('INSERT INTO users SET ?', user)).then(function() {
+                //The users has been to the db so notify them
+                res.json({ "messages": { 'strResponse': 'Success', 'status': '200', } });
+
             });
         }
-        
+
     }).catch(function(e) {
         logging.errorLog(username, e);
     });
-    
+
 
 });
 
