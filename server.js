@@ -12,13 +12,6 @@ var fs = require("fs");
 /* helpers */
 var connection = require('./Helpers/DbConnectionManager');
 var logging = require('./scripts/log.js'); //get config's for use 
-/* Remove after refactor - to use helper */
-var con = mysql.createConnection({
-    host: "localhost",
-    user: config.user,
-    password: config.password,
-    database: config.database
-});
 
 /* Variables */
 var app = express(); //express app
@@ -228,6 +221,7 @@ app.post('/register', function(req, res) {
     var age = req.body.age;
     var userMedicalCondition = req.body.medicalCondition;
     var conditionLevel = req.body.level;
+    var user;
 
 
     console.log(req.body);
@@ -277,58 +271,41 @@ app.post('/register', function(req, res) {
     }
     /*TODO: need to also ensure email is valid*/
     password = bcrypt.hashSync(password, saltRounds);
-    con.query('SELECT username FROM users WHERE username = ?', [username], function(err, usernameData) {
+
+    connection.query(mysql.format('SELECT * FROM users WHERE username = ? OR email = ?', [username, email])).then(function(results) {
+        console.log(results)
+        if (!(results.length === 0)) {
+            if (results[0].username === username) {
+                res.json({ "messages": { 'strResponse': 'Username Already taken', 'status': 'Failed' } });
+            }
+            else if (results[0].email === email) {
+                res.json({ "messages": { 'strResponse': 'Email Already taken', 'status': 'failed', } });
+            }
 
 
-        if (err) {
-            logging.errorLog(username, err);
-            res.json({ "messages": { 'strResponse': "Could not connect to database to validate username", 'status': 'Failed' } });
-        }
-        else if (!(usernameData.length === 0)) {
-            res.json({ "messages": { 'strResponse': 'Username Already taken', 'status': 'Failed' } });
         }
         else {
-            //node js's way of cheking undefined values is terrible so I had to split up the query into two in order to check both username and email
-            //very inefficient hopefully I will find a better way of testing for undefined variables
-            //I will see at a later date if a try catch will do the trick for me
-            con.query('SELECT email FROM users WHERE email = ?', [email], function(err, emailData) {
-                if (err) {
-                    logging.errorLog(username, err);
-                    res.json({ "messages": { 'strResponse': "Could not connect to database to validate username", 'status': 'Failed' } });
-                }
-                else if (!(emailData.length === 0)) {
-                    res.json({ "messages": { 'strResponse': 'Email Already taken', 'status': 'Failed' } });
-                }
-                else {
+            user = {
+                id: id,
+                username: username,
+                password: password,
+                firstname: firstName,
+                secondname: secondName,
+                age: age,
+                email: email,
+                usergoal: userGoal,
+                medicalcondition: userMedicalCondition,
+                conditionlevel: conditionLevel
+            };
+            return connection.query(mysql.format('INSERT INTO users SET ?', user)).then(function() {
+                //The users has been to the db so notify them
+                res.json({ "messages": { 'strResponse': 'Success', 'status': '200', } });
 
-                    var user = {
-                        id: id,
-                        username: username,
-                        password: password,
-                        firstname: firstName,
-                        secondname: secondName,
-                        age: age,
-                        email: email,
-                        usergoal: userGoal,
-                        medicalcondition: userMedicalCondition,
-                        conditionlevel: conditionLevel
-                    };
-
-                    con.query('INSERT INTO users SET ?', user, function(err) {
-                        //if an error occurs throw it 
-                        if (err) {
-                            console.log('Error:', err);
-                            res.json({ "messages": { 'strResponse': 'failed to store data', 'status': 'Failed' } });
-                        }
-                        else {
-                            res.json({ "messages": { 'strResponse': 'Success', 'status': 'Success', } });
-                        }
-
-                        //TODO add conditons for if username exist and other vaildation 
-                    });
-                }
             });
         }
+
+    }).catch(function(e) {
+        logging.errorLog(username, e);
     });
 
 
